@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name        Deezier
 // @namespace   Violentmonkey Scripts
-// @match       https://www.deezer.*/*
+// @match       https://www.deezer.com/*
 // @grant       none
-// @version     1.2
-// @author      Kiprinite
+// @version     1.3
+// @author      Kiprinite, Arias800
 // @description Make Deezer better enhancing it with new useful features
 // @license MIT
 // ==/UserScript==
@@ -21,8 +21,8 @@ class Util {
   /* Collection of useful functions for general purpose */
 
   static simplifyString(str) {
-      // "Les stations balnéaires (version acoustique) [remix]" -> "lesstationsbalnaires"
-      return str.replace(/[\[("].*[\])"]|\W/g, '').toLowerCase();
+    // "Les stations balnéaires (version acoustique) [remix]" -> "lesstationsbalnaires"
+    return str.replace(/[\[("].*[\])"]|\W/g, '').toLowerCase();
   }
 
   static idFromUrl(url) {
@@ -31,7 +31,9 @@ class Util {
 
   static idFromHref(elmt) {
     // Isolate the part after last slash '/' of the href URL for the given element
-    if (!elmt) { return console.error("Tried to retrieve id from href of an undefined element"); }
+    if (!elmt) {
+      return console.error("Tried to retrieve id from href of an undefined element");
+    }
     const href = elmt.getAttribute("href") || '';
     return Util.idFromUrl(href);
   }
@@ -39,23 +41,27 @@ class Util {
   static getElementUnderPointer() {
     const elmtsUnder = document.querySelectorAll(':hover');
     if (elmtsUnder.length) {
-      return elmtsUnder[elmtsUnder.length - 1]
+      return elmtsUnder[elmtsUnder.length - 1];
     }
     return null;
   }
 
-  static makeElementDraggable(elmt, fctShouldMove=null) {
+  static makeElementDraggable(elmt, fctShouldMove = null) {
     function moveElmt(e) {
       elmt.style.position = 'absolute';
       elmt.style.top = e.clientY + 'px';
-      elmt.style.left = e.clientX - elmt.clientWidth/2 + 'px';
+      elmt.style.left = e.clientX - elmt.clientWidth / 2 + 'px';
     }
+
     function mouseUp(e) {
       window.removeEventListener('mousemove', moveElmt, true);
       document.body.style.setProperty('user-select', "initial");
     }
+
     function mouseDown(e) {
-      if (fctShouldMove && !fctShouldMove()) { return; }
+      if (fctShouldMove && !fctShouldMove()) {
+        return;
+      }
       document.body.style = "user-select: none;";
       window.addEventListener('mousemove', moveElmt, true);
     }
@@ -68,15 +74,33 @@ class Util {
 class ElementBuilder {
   /* Factory to create DOM elements to inject in deezer app (all native) */
 
-  static createElement(name, properties={}) {
+  static createElement(name, properties = {}) {
     // Generic snippet to create an arbitrary element along with its properties/children
-    const { id, classes, inner, innerHtml, attributes={}, style={}, children=[] } = properties;
-    var elmt = document.createElement(name);
-    if (id) { elmt.id = id; }
-    if (classes) { elmt.className = classes; }
-    if (inner) { elmt.innerText = inner; }
-    if (innerHtml) { elmt.innerHTML = innerHtml; }
-    Object.keys(attributes).map(k => { elmt.setAttribute(k, attributes[k]) });
+    const {
+      id,
+      classes,
+      inner,
+      innerHtml,
+      attributes = {},
+      style = {},
+      children = []
+    } = properties;
+    const elmt = document.createElement(name);
+    if (id) {
+      elmt.id = id;
+    }
+    if (classes) {
+      elmt.className = classes;
+    }
+    if (inner) {
+      elmt.innerText = inner;
+    }
+    if (innerHtml) {
+      elmt.innerHTML = innerHtml;
+    }
+    Object.keys(attributes).map(k => {
+      elmt.setAttribute(k, attributes[k]);
+    });
     Object.assign(elmt.style, style);
     (Array.isArray(children) ? children : [children]).map(child => elmt.appendChild(child));
     return elmt;
@@ -86,22 +110,32 @@ class ElementBuilder {
 
   static createInPlaylistToken(inPlaylists) {
     // Create a little visual marker meaning 'already present in a playlist' in Deezer style (like the 'E' for explicit song)
-    var tokenContent = this.createElement('div',{
+    const tokenContent = this.createElement('div', {
       classes: "explicit outline small",
       inner: inPlaylists.length == 1 ? "V" : inPlaylists.length,
-      style: { color: "green", 'border-color': "green" }
+      style: {
+        color: "green",
+        'border-color': "green"
+      }
     });
     return this.createElement('div', {
       classes: "datagrid-cell cell-explicit-small deezier-token",
-      attributes: {title: inPlaylists.join('\n')},
+      attributes: {
+        title: inPlaylists.join('\n')
+      },
       children: [tokenContent]
     });
   }
 
   static createButton(text, cbFunction) {
-    var btn = this.createElement("button", {
+    const btn = this.createElement("button", {
       inner: text,
-      style: { padding: "5px", border: "1px solid", margin: "5px", 'margin-left': "20px" }
+      style: {
+        padding: "5px",
+        border: "1px solid",
+        margin: "5px",
+        'margin-left': "20px"
+      }
     });
     btn.addEventListener('click', () => cbFunction());
     return btn;
@@ -130,20 +164,35 @@ class ElementBuilder {
     });
   }
 
-  static createSearchbar(forPopup=false) {
+  static createSearchbar(forPopup = false) {
     // A searchbar element that will determine the content displayed in the 'library list' below
-    var glass = this.createElement('div', {
+    const glass = this.createElement('div', {
       inner: "🔎",
-      style: { float: "left", margin: "2px 8px 1px 2px" }
+      style: {
+        float: "left",
+        margin: "2px 8px 1px 2px"
+      }
     });
-    var searchField = this.createElement('input', {
-      attributes: { placeholder: "Search in playlists ...", type: "text" },
-      style : { 'border-style': "none", 'background-color': "#191922", color: "#a5a5ae", width: forPopup ? "300px" : "" }
+    const searchField = this.createElement('input', {
+      attributes: {
+        placeholder: "Search in playlists ...",
+        type: "text"
+      },
+      style: {
+        'border-style': "none",
+        'background-color': "#191922",
+        color: "#a5a5ae",
+        width: forPopup ? "300px" : ""
+      }
     });
-    var searchBar = this.createElement('div', {
-      style: { border: "1px solid", display: "inline-block", margin: forPopup ? "10px 0px 0px 10px" : "" },
-      children: [glass, searchField]}
-    );
+    const searchBar = this.createElement('div', {
+      style: {
+        border: "1px solid",
+        display: "inline-block",
+        margin: forPopup ? "10px 0px 0px 10px" : ""
+      },
+      children: [glass, searchField]
+    });
     searchField.addEventListener("keyup", e => {
       const tomatch = e.target.value;
       if (tomatch.length < 3) {
@@ -160,12 +209,22 @@ class ElementBuilder {
 
   static createExpandButton() {
     // A button to expand the library view in a popup coming in front of the Deezer app page
-    const expandButton = this.createElement('button', { innerHtml: "<b>⛶</b>", style: { width: "25px", color: "rgb(165, 165, 174)" } });
+    const expandButton = this.createElement('button', {
+      innerHtml: "<b>⛶</b>",
+      style: {
+        width: "25px",
+        color: "rgb(165, 165, 174)"
+      }
+    });
     expandButton.addEventListener("click", () => DeezierArea.getInstance().toggleDeezierPopup());
     return this.createElement('div', {
       style: {
-        'background-color': "#2d2d2d", width: "fit-content", 'border-radius': "4px",
-	      border: "1px solid", display: "inline-block", 'margin-left': "2px"
+        'background-color': "#2d2d2d",
+        width: "fit-content",
+        'border-radius': "4px",
+        border: "1px solid",
+        display: "inline-block",
+        'margin-left': "2px"
       },
       children: expandButton
     });
@@ -174,7 +233,9 @@ class ElementBuilder {
   static createLibraryListTopBar() {
     // The bar above the library list element made up of the searchbar + expand button
     return this.createElement('div', {
-      style: { margin: "15px 1px 5px 5px" },
+      style: {
+        margin: "15px 1px 5px 5px"
+      },
       children: [this.createSearchbar(), this.createExpandButton()]
     });
   }
@@ -183,9 +244,13 @@ class ElementBuilder {
     // The frame where the library list elements will live, to be filled later with these ones
     return this.createElement('div', {
       style: {
-        height: "250px", width: "211px", 'overflow-y': "scroll",
-        border: "1px #aabbcc solid", padding: "10px", 'margin-left': "5px"
-	    },
+        height: "250px",
+        width: "211px",
+        'overflow-y': "scroll",
+        border: "1px #aabbcc solid",
+        padding: "10px",
+        'margin-left': "5px"
+      },
       children: this.createElement('div', {
         id: ID_LIBRARY_ELMT
       })
@@ -194,11 +259,13 @@ class ElementBuilder {
 
   static createLibraryListElmts() {
     // Build a list filled with items that are the playlists known in the library
-    var elmts = [];
+    const elmts = [];
     for (let [pId, playlist] of DeezierArea.getInstance().getLibrary()) {
-      var playlistLinkElmt = this.createElement('a', {
+      const playlistLinkElmt = this.createElement('a', {
         inner: `${playlist.title} (${playlist.length})`,
-        attributes: {href: playlist.url}
+        attributes: {
+          href: playlist.url
+        }
       });
       elmts.push(this.createElement('div', {
         children: [playlistLinkElmt]
@@ -208,28 +275,36 @@ class ElementBuilder {
   }
 
   static createSimilarTracksElmts(simTracks) {
-    var elmts = [];
-    var lib = DeezierArea.getInstance().getLibrary();
+    const elmts = [];
+    const lib = DeezierArea.getInstance().getLibrary();
     Object.entries(simTracks).map(([aId, simGroups]) => {
-      var artistName = lib.getArtistName(aId);
-      var children = [];
+      const artistName = lib.getArtistName(aId);
+      const children = [];
       children.push(this.createElement('a', {
-        innerHtml:`<b>[<u style="background-color: #191922;">___${artistName} (${simGroups.length})___</u>]</b>`,
-        attributes: { href: "https://www.deezer.com/fr/artist/" + aId }
+        innerHtml: `<b>[<u style="background-color: #191922;">___${artistName} (${simGroups.length})___</u>]</b>`,
+        attributes: {
+          href: "https://www.deezer.com/fr/artist/" + aId
+        }
       }));
       simGroups.map((similars, i) => {
         similars.map((track, j) => {
           children.push(this.createElement('br'));
-          var branchStyle = '┣';
-          if (j == similars.length-1) {
+          let branchStyle = '┣';
+          if (j == similars.length - 1) {
             branchStyle = '┡';
-            if (i == simGroups.length-1) { branchStyle = '┗'; }
+            if (i == simGroups.length - 1) {
+              branchStyle = '┗';
+            }
           }
-          var playlists = lib.getPlaylistsNameFromId(track.inPlaylists, true).sort();
+          const playlists = lib.getPlaylistsNameFromId(track.inPlaylists, true).sort();
           children.push(this.createElement('a', {
             innerHtml: `  ${branchStyle} <i><b>${track.title}</b></i> ∈ [ ${playlists.join(',&nbsp;')} ]`,
-            attributes: { href: "https://www.deezer.com/fr/track/" + track.track_id },
-            style: { 'white-space': "nowrap" }
+            attributes: {
+              href: "https://www.deezer.com/fr/track/" + track.track_id
+            },
+            style: {
+              'white-space': "nowrap"
+            }
           }));
         });
       });
@@ -242,15 +317,19 @@ class ElementBuilder {
 
   static createTopArtistElmts(topArtists) {
     const elmts = [];
-    var lib = DeezierArea.getInstance().getLibrary();
+    const lib = DeezierArea.getInstance().getLibrary();
     topArtists.map(artist => {
-      var artistName = lib.getArtistName(artist.artist_id);
-      var fav = lib.isArtistFavorite(artist.artist_id) ? '♡&nbsp;' : '&emsp;';
-      var playlists = lib.getPlaylistsNameFromId(artist.inPlaylists).sort();
-      var line = this.createElement('a', {
-        innerHtml:`<b><u style="background-color: #191922;">${fav}${artistName}</u> (${artist.nbr_tracks} tracks)</b> ∈ [ ${playlists.join(',&nbsp;')} ]`,
-        attributes: { href: "https://www.deezer.com/fr/artist/" + artist.artist_id },
-        style: { 'white-space': "nowrap" }
+      const artistName = lib.getArtistName(artist.artist_id);
+      const fav = lib.isArtistFavorite(artist.artist_id) ? '♡&nbsp;' : '&emsp;';
+      const playlists = lib.getPlaylistsNameFromId(artist.inPlaylists).sort();
+      const line = this.createElement('a', {
+        innerHtml: `<b><u style="background-color: #191922;">${fav}${artistName}</u> (${artist.nbr_tracks} tracks)</b> ∈ [ ${playlists.join(',&nbsp;')} ]`,
+        attributes: {
+          href: "https://www.deezer.com/fr/artist/" + artist.artist_id
+        },
+        style: {
+          'white-space': "nowrap"
+        }
       });
       elmts.push(this.createElement('div', {
         children: line
@@ -261,34 +340,48 @@ class ElementBuilder {
 
   static createLibrarySearchResultsElmts(searchResults) {
     // From the results of a research made in the searchbar, build the items to fill in the library list displaying matches
-    var elmts = [];
-    var lib = DeezierArea.getInstance().getLibrary();
+    const elmts = [];
+    const lib = DeezierArea.getInstance().getLibrary();
     Object.entries(searchResults).map(([pId, results]) => {
-      var playlist = lib.getPlaylist(pId);
-      var children = [];
+      const playlist = lib.getPlaylist(pId);
+      const children = [];
       // name of playlist we fond results in
       children.push(this.createElement('a', {
-        innerHtml:`<b>[<u style="background-color: #191922;">___${playlist.title} (${results.title.length + results.artist.length})___</u>]</b>`,
-        attributes: {href: playlist.url}
+        innerHtml: `<b>[<u style="background-color: #191922;">___${playlist.title} (${results.title.length + results.artist.length})___</u>]</b>`,
+        attributes: {
+          href: playlist.url
+        }
       }));
       // elements in first serie under playlist name are matches on the song title
-      results.title.map((track, i, {length}) => {
+      results.title.map((track, i, {
+        length
+      }) => {
         children.push(this.createElement('br'));
-        var branchStyle = i == length-1 ? (results.artist.length ? '┡' : '┗') : '┣';
+        const branchStyle = i == length - 1 ? (results.artist.length ? '┡' : '┗') : '┣';
         children.push(this.createElement('a', {
           innerHtml: `  ${branchStyle} <i><b>${track.title}</b></i> - ${track.artist_name}`,
-          attributes: { href: track.url },
-          style: { 'white-space': "nowrap" }
+          attributes: {
+            href: track.url
+          },
+          style: {
+            'white-space': "nowrap"
+          }
         }));
       });
       // elements in second serie under playlist name are matches on the artist name
-      results.artist.map((track, i, {length}) => {
+      results.artist.map((track, i, {
+        length
+      }) => {
         children.push(this.createElement('br'));
-        var branchStyle = i == length-1 ? '┗' : '┣';
+        const branchStyle = i == length - 1 ? '┗' : '┣';
         children.push(this.createElement('a', {
           innerHtml: `  ${branchStyle} <i><b>${track.title}</b></i> - ${track.artist_name}`,
-          attributes: {href: track.url},
-          style: { 'white-space': "nowrap" }
+          attributes: {
+            href: track.url
+          },
+          style: {
+            'white-space': "nowrap"
+          }
         }));
       });
       elmts.push(this.createElement('div', {
@@ -299,21 +392,29 @@ class ElementBuilder {
   }
 
   static createLastRefreshElmt() {
-    var refreshButton = this.createElement('button', {
+    const refreshButton = this.createElement('button', {
       id: ID_REFRESH_ELMT,
       innerText: "Last refresh at --:--"
     });
-    refreshButton.onclick = () => { DeezierArea.getInstance().refreshLibraryContent().then(
-      () => { DeezierArea.getInstance().setLibraryViewPlaylists() }) };
+    refreshButton.onclick = () => {
+      DeezierArea.getInstance().refreshLibraryContent().then(
+        () => {
+          DeezierArea.getInstance().setLibraryViewPlaylists();
+        });
+    };
     return this.createElement('div', {
-      style: { 'text-align': "right", 'padding-right': "15px", 'color': "#52525d" },
+      style: {
+        'text-align': "right",
+        'padding-right': "15px",
+        'color': "#52525d"
+      },
       children: refreshButton
     });
   }
 
   static createDeezierPanelArea() {
     // The global panel where Deezier's components live
-    var area = document.createElement("div");
+    const area = document.createElement("div");
     area.appendChild(ElementBuilder.createBtnDetectInPlaylistTracks());
     area.appendChild(ElementBuilder.createBtnDetectSimilarTracks());
     area.appendChild(ElementBuilder.createBtnGetArtistsTop());
@@ -347,7 +448,9 @@ class ElementBuilder {
     closePopupButton.addEventListener("click", () => DeezierArea.getInstance().toggleDeezierPopup());
     return this.createElement("div", {
       id: ID_POPUP_HEADER,
-      style: { height: "45px" },
+      style: {
+        height: "45px"
+      },
       children: [deezierTitle, closePopupButton, this.createElement("hr")]
     });
   }
@@ -357,20 +460,25 @@ class ElementBuilder {
     const btnSimilarTracks = this.createBtnDetectSimilarTracks();
     const btnTopArtists = this.createBtnGetArtistsTop();
     return this.createElement("div", {
-      style: { height: "5%" },
+      style: {
+        height: "5%"
+      },
       children: [searchBar, btnSimilarTracks, btnTopArtists]
     });
   }
 
   static createPopupBodyLibraryList() {
     // A frame similar to the library list view in sidebar but it can leverage the space offered by the popup
-    const libList = ElementFinder.getLibrary().cloneNode(true);  // at creation consider same content as in sidebar
+    const libList = ElementFinder.getLibrary().cloneNode(true); // at creation consider same content as in sidebar
     libList.id = ID_POPUP_LIBRARY_ELMT;
     return this.createElement('div', {
       style: {
-        height: "94%", 'overflow-y': "scroll",
-        border: "1px #aabbcc solid", padding: "10px", 'margin': "0px 5px 0px 5px"
-	    },
+        height: "94%",
+        'overflow-y': "scroll",
+        border: "1px #aabbcc solid",
+        padding: "10px",
+        'margin': "0px 5px 0px 5px"
+      },
       children: libList
     });
   }
@@ -378,7 +486,9 @@ class ElementBuilder {
   static createPopupBody() {
     return this.createElement("div", {
       id: ID_POPUP_BODY,
-      style: { height: "750px" },
+      style: {
+        height: "750px"
+      },
       children: [this.createPopupBodyTopBar(), this.createPopupBodyLibraryList()]
     });
   }
@@ -403,7 +513,7 @@ class ElementBuilder {
       },
       children: [popupHeader, popupBody]
     });
-    Util.makeElementDraggable(popup, () => Util.getElementUnderPointer() === popupHeader);
+    Util.makeElementDraggable(popup, () => Util.getElementUnderPointer() == popupHeader);
     return popup;
   }
 
@@ -417,10 +527,10 @@ class ElementFinder {
   static OBFUSCATED = {
     container_tracks: '_1uDWG',
     track_toplvl: '_2OACy',
-    track: '_2OACy',
+    track: 'JIYRe y0aRt',
     album: '_10fIC',
-    track_title: '_1R22u',
-    track_title_only: 'AL075'  // track_title can contain explicit 'E' token or InPlaylist 'V' token + special case track unavailable
+    track_title: 'NkGZL',
+    track_title_only: 'NkGZL' // track_title can contain explicit 'E' token or InPlaylist 'V' token + special case track unavailable
   };
 
   static getDeezerApp() {
@@ -430,16 +540,16 @@ class ElementFinder {
 
   static getProfileId() {
     // Discover the user id by looking at current page
-    var l = document.getElementsByClassName("sidebar-nav-link is-main");
-    for (let e of l) {
-      var res = e.href.match(/.*profile\/(\d+)/);
-      if (res) { return res[1]; }
+    const l = document.documentElement.innerHTML;
+    const res = l.match("deezer_user_id': (.+?),");
+    if (res) {
+      return res[1];
     }
   }
 
   static getSidebar() {
     // Deezer original left sidebar, present in whatever is the current app view
-    return document.getElementsByClassName("nano-content")[0];
+    return document.getElementsByClassName("css-efpag6")[0];
   }
 
   static getPlayer() {
@@ -466,23 +576,32 @@ class ElementFinder {
   static getCurrentTrackInPlayer() {
     // The track currently played in the player and info about it (cannot get track id directly)
     const player = this.getPlayer();
-    if (!player) { console.error("Unable to get global player object"); return null; }
-    const trackElmt = player.getElementsByClassName("track-title")[0];
-    if (!trackElmt) { console.error("Unable to get track object in player", player); return null; }
-    const [titleElmt, artistElmt] = trackElmt.getElementsByClassName("track-link");
-    if (!titleElmt || !artistElmt) { console.error("Unable to get info from track in player", trackElmt); return null; }
+    if (!player) {
+      console.error("Unable to get global player object");
+      return null;
+    }
+    const trackElmt = player.querySelector('[data-testid=item_title] > a');
+    if (!trackElmt) {
+      console.error("Unable to get track object in player", player);
+      return null;
+    }
+    const artistElmt = player.querySelector('[data-testid=item_subtitle] > a');
+    if (!artistElmt) {
+      console.error("Unable to get info from track in player", trackElmt);
+      return null;
+    }
     return {
       track: trackElmt,
       artist_id: Util.idFromHref(artistElmt),
       artist_name: artistElmt.innerText,
-      album_id: Util.idFromHref(titleElmt),  // clicking on the title redirects to album it's in actually
-      title: titleElmt.innerText
+      album_id: Util.idFromHref(trackElmt), // clicking on the title redirects to album it's in actually
+      title: trackElmt.innerText
     };
   }
 
   static getTracksInPage() {
     // Build an array of tracks present in current page (beware Deezer adjusts it dynamically when scrolling)
-    var tracks = document.getElementsByClassName("datagrid-row song");
+    let tracks = document.getElementsByClassName("datagrid-row song");
     if (!tracks.length) {
       tracks = document.getElementsByClassName(this.OBFUSCATED.track);
     }
@@ -491,48 +610,58 @@ class ElementFinder {
 
   static getTrackIdFromElement(trackElement) {
     // From a track element, find out its id (only usable when not obfuscated, otherwise it isn't present at all)
-    var titleElmts = trackElement.getElementsByClassName("datagrid-label-main title");
+    const titleElmts = trackElement.getElementsByClassName("datagrid-label-main title");
     if (!titleElmts.length) {
       return null;
     }
-    var urlToParse = titleElmts[0].getAttribute('href');
-    return parseInt(urlToParse.substr(urlToParse.lastIndexOf('/')+1));
+    const urlToParse = titleElmts[0].getAttribute('href');
+    return parseInt(urlToParse.substr(urlToParse.lastIndexOf('/') + 1));
   }
 
   static getArtistInfoFromPage() {
     return {
-      artistName: document.querySelector('meta[itemprop="name"]').content,
-      artistId: Util.idFromUrl(document.querySelector('meta[itemprop="url"]').content)
-    }
+      artistName: document.querySelector("[data-testid='creator-name']").innerText,
+      artistId: Util.idFromHref(document.querySelector("[data-testid='creator-name']"))
+    };
   }
 
   static getTrackInfosFromElement(trackElement) {
     // Get the maximum information from a track element in the case it is obfuscated (no more id so we do the best)
     const titleElmt = trackElement.getElementsByClassName(this.OBFUSCATED.track_title)[0];
     // Note: Deezer implemented stupid feature to number tracks, need to strip it
-    const titleText = titleElmt.querySelector('.' + this.OBFUSCATED.track_title_only).innerText.replace(/^\d+\. /g, "");
+    const titleText = titleElmt.innerText.replace(/^\d+\. /g, "");
     const albumElmt = trackElement.querySelector("[data-testid='album']");
-    var albumName, albumId, artistName, artistId;
-    if (albumElmt === undefined) {
+    let albumName, albumId, artistName, artistId;
+    if (albumElmt == null) {
       // We are probably on the artist's page where no album is displayed in track elements, try to get info elsewhere
-      var {artistName, artistId} = this.getArtistInfoFromPage();
+      const {
+        artistName,
+        artistId
+      } = this.getArtistInfoFromPage();
+      albumId = Util.idFromUrl(window.location.href);
     } else {
       albumName = albumElmt.innerText;
       albumId = Util.idFromHref(albumElmt);
       const artistElmt = trackElement.querySelector("[data-testid='artist']");
       if (!artistElmt) {
         // Didn't manage to get artist elmt at the left of album (Deezer removed column on pages where artist is explicit like Artist's top tracks)
-        var {artistName, artistId} = this.getArtistInfoFromPage();
+        const {
+          artistName,
+          artistId
+        } = this.getArtistInfoFromPage();
       } else {
-              artistName = artistElmt.innerText;
-      artistId = Util.idFromHref(artistElmt);
+        artistName = artistElmt.innerText;
+        artistId = Util.idFromHref(artistElmt);
       }
     }
 
     return {
-      title: titleText, title_elmt: titleElmt,
-      album_name: albumName, album_id: albumId,
-      artist_name: artistName, artist_id: artistId
+      title: titleText,
+      title_elmt: titleElmt,
+      album_name: albumName,
+      album_id: albumId,
+      artist_name: artistName,
+      artist_id: artistId
     };
   }
 
@@ -545,16 +674,20 @@ class ElementFinder {
 
   static getElmtToMonitorScrolling() {
     // A container for the tracks in the current view Deezer maintains, that can be monitored to detect new ones spawned
-    var elmtToMonitor, isObfuscated;
+    let elmtToMonitor, isObfuscated;
     const datagridElmt = document.getElementsByClassName("datagrid");
     if (datagridElmt.length) {
       const parent = datagridElmt[0];
-      if (parent.childNodes.length <= 1) { return null; }
+      if (parent.childNodes.length <= 1) {
+        return null;
+      }
       elmtToMonitor = parent.childNodes[1];
       isObfuscated = false;
-    } else {  // Likely we are in obfuscated case
+    } else { // Likely we are in obfuscated case
       const trackContainer = document.getElementsByClassName(this.OBFUSCATED.container_tracks);
-      if (!trackContainer.length) { return null; }
+      if (!trackContainer.length) {
+        return null;
+      }
       elmtToMonitor = trackContainer[0];
       isObfuscated = true;
     }
@@ -576,9 +709,12 @@ class DOM_Monitor {
     this.observers = {};
   }
 
-  createObserver(name, domElmt, callback, options={}) {
+  createObserver(name, domElmt, callback, options = {}) {
     // Add a new observer to the maintained one, by index (if already existing it is properly replaced)
-    options = Object.assign( { attributes: true, childList: false }, options);
+    options = Object.assign({
+      attributes: true,
+      childList: false
+    }, options);
     if (this.observers[name] !== undefined) {
       console.log("Disconnect listening DOM observer", name, this.observers[name]);
       this.observers[name].disconnect();
@@ -596,10 +732,11 @@ class DOM_Monitor {
       return false;
     }
     const thisForCallback = this;
+
     function cbPageChanged(mutationsList) {
       mutationsList.forEach(mutation => {
-        if (mutation.type === "attributes" && mutation.attributeName === "class") {
-          if (!mutation.target.classList.contains("opened")) {  // process when state is flipped back from opened
+        if (mutation.type == "attributes" && mutation.attributeName == "class") {
+          if (!mutation.target.classList.contains("opened")) { // process when state is flipped back from opened
             function newScrollingObs() {
               if (!thisForCallback.createScrollingObserver()) {
                 console.log("New page view loaded but no element to monitor scrolling found in");
@@ -607,7 +744,7 @@ class DOM_Monitor {
               // in all cases, let's try to add inPlaylist tokens
               DeezierArea.getInstance().appendInPlaylistTokens();
             }
-            setTimeout(newScrollingObs, 500);  // let the time for DOM to be filled in with components
+            setTimeout(newScrollingObs, 500); // let the time for DOM to be filled in with components
           }
         }
       });
@@ -619,42 +756,64 @@ class DOM_Monitor {
   createScrollingObserver() {
     // Observer triggered when new tracks are added by deezer (at scrolling) in the containing element
     const scrollElmtFound = ElementFinder.getElmtToMonitorScrolling();
-    if (scrollElmtFound === null) { return false; }
-    var [elmtToMonitor, isObfuscated] = scrollElmtFound;
-    if (elmtToMonitor == null) { return false; }
+    if (scrollElmtFound == null) {
+      return false;
+    }
+    const [elmtToMonitor, isObfuscated] = scrollElmtFound;
+    if (elmtToMonitor == null) {
+      return false;
+    }
+
     function cbScrolling(mutationsList) {
-      var newTrackAdded = false;
-      for(var mutation of mutationsList) {
+      let newTrackAdded = false;
+      for (const mutation of mutationsList) {
         if (mutation.type == 'childList') {
-          for (var n of mutation.addedNodes) {
-            if (n.className === ElementFinder.OBFUSCATED.track_toplvl) {
+          for (const n of mutation.addedNodes) {
+            if (n.className == ElementFinder.OBFUSCATED.track_toplvl) {
               newTrackAdded = true;
               break;
             }
           }
         }
       }
-      if (newTrackAdded) { DeezierArea.getInstance().appendInPlaylistTokens(); }
-    };
-    var options = isObfuscated ? { childList: true, subtree: true, attributes: false } : { };
+      if (newTrackAdded) {
+        DeezierArea.getInstance().appendInPlaylistTokens();
+      }
+    }
+    const options = isObfuscated ? {
+      childList: true,
+      subtree: true,
+      attributes: false
+    } : {};
     this.createObserver(DOM_Monitor.SCROLLING_OBS, elmtToMonitor, cbScrolling, options);
     return true;
   }
 
   createPlayingTrackObserver() {
-    var trackPlayer = ElementFinder.getCurrentTrackInPlayer();
-    if (!trackPlayer) { return false; }
-    const trackElmt = trackPlayer['track'];
+    const trackPlayer = ElementFinder.getCurrentTrackInPlayer();
+    console.log(trackPlayer);
+    if (!trackPlayer) {
+      return false;
+    }
+    const trackElmt = trackPlayer.track;
+
     function cbTrackChange(mutationsList) {
-      var trackChanged = false;
-      for(var mutation of mutationsList) {
+      let trackChanged = false;
+      for (const mutation of mutationsList) {
         if (mutation.type == 'characterData') {
           trackChanged = true;
         }
       }
-      if (trackChanged) { DeezierArea.getInstance().appendInPlaylistTokens(); }
+      if (trackChanged) {
+        DeezierArea.getInstance().appendInPlaylistTokens();
+      }
+    }
+    const options = {
+      childList: false,
+      subtree: true,
+      attributes: false,
+      characterData: true
     };
-    const options = { childList: false, subtree: true, attributes: false, characterData: true };
     this.createObserver(DOM_Monitor.PLAYING_TRACK_OBS, trackElmt, cbTrackChange, options);
     return true;
   }
@@ -668,8 +827,8 @@ class MusicLibrary {
 
   constructor(profileId) {
     this.profileId = profileId;
-    this.playlists = {};  // index by playlist id
-    this.artists = {};  // index by artist id
+    this.playlists = {}; // index by playlist id
+    this.artists = {}; // index by artist id
     this.lastRefresh = null;
   }
 
@@ -678,6 +837,7 @@ class MusicLibrary {
   async fetchPlaylists() {
     // From the known user id, retrieve from Deezer API the list of his personal playlist and filter out interesting metadata
     const response = await fetch(`https://api.deezer.com/user/${this.profileId}/playlists&limit=1000`);
+    console.log(response);
     const playlists = await response.json();
     return playlists.data.map(p => ({
       id: p.id,
@@ -723,7 +883,7 @@ class MusicLibrary {
   async computePlaylists() {
     // Fill the playlists index with metadata from the user playlists (not yet the tracks in these)
     // The 'tracks' field with actual track data has to be filled afterwards calling fetchTracks()
-    var pList = await this.fetchPlaylists();
+    const pList = await this.fetchPlaylists();
     console.log("Fetched", pList.length, "playlists");
     pList.map(p => {
       this.playlists[p.id] = {
@@ -731,7 +891,7 @@ class MusicLibrary {
         title: p.title,
         length: p.length,
         creator: p.creator,
-        tracks: {},  // <- will be filled once tracks fetched as well
+        tracks: {}, // <- will be filled once tracks fetched as well
         url_tracks: p.url_tracks,
         url_picture: p.url_picture,
         time_lastmodif: p.time_lastmodif
@@ -739,12 +899,12 @@ class MusicLibrary {
     });
   }
 
-  async computeTracks(playlistIds=[]) {
+  async computeTracks(playlistIds = []) {
     // For each playlist in the library or given list, fetch the tracks in it, create an object indexed by track ids and
     // references this object in the property this.playlists.playlistId.tracks
     playlistIds = playlistIds.length > 0 ? playlistIds : Object.keys(this.playlists);
     for (let p of playlistIds) {
-      var trackList = await this.fetchTracks(p);
+      const trackList = await this.fetchTracks(p);
       trackList.forEach(t => {
         this.playlists[p]['tracks'][t.track_id] = t;
         const artist = this.addArtist(t.artist_id, t.artist_name);
@@ -758,12 +918,16 @@ class MusicLibrary {
   }
 
   async computeFavoriteArtists() {
-    const favArtists = await this.fetchFavoriteArtists();
-    console.log("Favorite artists ", favArtists);
-    favArtists.map(a => {
+    const faconsttists = await this.fetchFavoriteArtists();
+    console.log("Favorite artists ", faconsttists);
+    faconsttists.map(a => {
       const artistEntry = this.getArtist(a.artist_id);
       if (artistEntry) {
-        Object.assign(artistEntry, { favorite: true, time_added: a.time_added, nbr_fans: a.nbr_fans });
+        Object.assign(artistEntry, {
+          favorite: true,
+          time_added: a.time_added,
+          nbr_fans: a.nbr_fans
+        });
       } else {
         //console.error("A favorite artist", a.artist_name, "(id", a.artist_id, ") isn't in the library");
       }
@@ -782,35 +946,39 @@ class MusicLibrary {
     return this.playlists[id] || null;
   }
 
-  isPlaylistListable(pId, lovedTracksPlaylist=false, otherUserPlaylists=false) {
+  isPlaylistListable(pId, lovedTracksPlaylist = false, otherUserPlaylists = false) {
     // When we list some playlists, we want to omit some undesired specific ones using known criteria
     const playlist = this.getPlaylist(pId);
-    if (playlist === null) { return false }
+    if (playlist == null) {
+      return false;
+    }
     const isOwnUserPlaylist = (playlist.creator == ElementFinder.getProfileId());
-    if (otherUserPlaylists || isOwnUserPlaylist) {  // consider only user's playlist if not specified
-      if (lovedTracksPlaylist || playlist.title != "Loved Tracks" || !isOwnUserPlaylist) {
+    if (otherUserPlaylists || isOwnUserPlaylist) { // consider only user's playlist if not specified
+      if (lovedTracksPlaylist || playlist.title !== "Loved Tracks" || !isOwnUserPlaylist) {
         return true;
       }
     }
     return false;
   }
 
-  getPlaylistsNameFromId(playlistIds, keepOmitted=false, fancyNames=true) {
+  getPlaylistsNameFromId(playlistIds, keepOmitted = false, fancyNames = true) {
     // From a playlist ids list, return the corresponding names (maybe discarding some non listable ones)
     if (!keepOmitted) {
       playlistIds = playlistIds.filter(pId => this.isPlaylistListable(pId));
     }
 
     return playlistIds.map(pId => {
-      var title = this.getPlaylist(pId).title;
+      const title = this.getPlaylist(pId).title;
       if (fancyNames) {
-        if (title === "Loved Tracks") { return "♡"; }
+        if (title == "Loved Tracks") {
+          return "♡";
+        }
       }
       return title;
     });
   }
 
-  getTracksInPlaylist(playlistId, onlyTrackIds=true) {
+  getTracksInPlaylist(playlistId, onlyTrackIds = true) {
     // From a playlist id, return the known tracks metadata (or only ids) we have in the index for this playlist
     if (this.playlists[playlistId] !== undefined) {
       return Object.entries(this.playlists[playlistId].tracks).map(([tId, track]) => onlyTrackIds ? tId : track);
@@ -818,16 +986,16 @@ class MusicLibrary {
     return [];
   }
 
-  getAllTracks(onlyTrackIds=true) {
+  getAllTracks(onlyTrackIds = true) {
     // Build an array with all known tracks in the library's playlist index
-    var allTracks = [];
+    const allTracks = [];
     Object.keys(this.playlists).map(pId => allTracks.push(...this.getTracksInPlaylist(pId, onlyTrackIds)));
     return allTracks;
   }
 
-  getPlaylistsContainingTrack(trackId, lovedTracksPlaylist=false, otherUserPlaylists=false) {
+  getPlaylistsContainingTrack(trackId, lovedTracksPlaylist = false, otherUserPlaylists = false) {
     // From a track id, return all playlists (title) we have containing the track in the library's playlists index
-    var inPlaylists = [];
+    const inPlaylists = [];
     Object.entries(this.playlists).map(([pId, playlist]) => {
       if (this.isPlaylistListable(pId, lovedTracksPlaylist, otherUserPlaylists)) {
         if (this.getTracksInPlaylist(pId).includes(String(trackId))) {
@@ -844,13 +1012,16 @@ class MusicLibrary {
     const re = RegExp(tomatch, 'i');
     const matchedPlaylists = {};
     Object.entries(this.playlists).map(([pId, playlist]) => {
-      var matches = { title: [], artist: [] };
+      const matches = {
+        title: [],
+        artist: []
+      };
       Object.values(playlist.tracks).map(track => {
-        var matchCategory = null;
-        if (re.test(track.title) && !matches.title.filter(m => m.id === track.track_id).length) {
+        let matchCategory = null;
+        if (re.test(track.title) && !matches.title.filter(m => m.id == track.track_id).length) {
           matchCategory = matches.title;
         }
-        if (re.test(track.artist_name) && !matches.artist.filter(m => m.id === track.track_id).length) {
+        if (re.test(track.artist_name) && !matches.artist.filter(m => m.id == track.track_id).length) {
           matchCategory = matches.artist;
         }
         matchCategory !== null && matchCategory.push(Object.assign({}, track));
@@ -871,13 +1042,15 @@ class MusicLibrary {
 
   getArtistName(artistId) {
     const artist = this.getArtist(artistId);
-    if (!artist) { return null }
+    if (!artist) {
+      return null;
+    }
     return artist['artist_name'];
   }
 
   isArtistFavorite(id) {
     const artist = this.getArtist(id);
-    return artist ? (artist.favorite === true) : null;
+    return artist ? (artist.favorite == true) : null;
   }
 
   getArtistIds() {
@@ -888,20 +1061,24 @@ class MusicLibrary {
   getAlbumsFromArtist(artistId) {
     // From an artist id, return all the known albums in the library's artists index
     const artist = this.getArtist(artistId);
-    if (!artist) { return null }
+    if (!artist) {
+      return null;
+    }
     return artist['albums'];
   }
 
-  getAlbumTracksFromArtist(artistId, albumId, albumName=null) {
+  getAlbumTracksFromArtist(artistId, albumId, albumName = null) {
     // From the known artists, return the album tracks object if it exists by id, or the id of an exactly matching album title if
     // the id doesn't exist anymore (it was returned by Deezer API which is inconsistent)
     const artist = this.getArtist(artistId);
-    if (!artist) { return null }
+    if (!artist) {
+      return null;
+    }
     if (!artist['albums'][albumId]) {
       // Try to get best match on title because Deezer fucked up and returned obsolete id
-      var matchingAlbum = null;
+      let matchingAlbum = null;
       Object.entries(artist['albums']).map(([albumId, album]) => {
-        if (album.album_name === albumName) {
+        if (album.album_name == albumName) {
           matchingAlbum = albumId;
         }
       });
@@ -912,8 +1089,10 @@ class MusicLibrary {
 
   getAllAlbumsContentFromArtist(artistId) {
     const albums = this.getAlbumsFromArtist(artistId);
-    const foundTracks = { };
-    if (albums === null) { return foundTracks; }
+    const foundTracks = {};
+    if (albums == null) {
+      return foundTracks;
+    }
     Object.values(albums).map(album => {
       Object.assign(foundTracks, album['album_tracks']);
     });
@@ -923,10 +1102,12 @@ class MusicLibrary {
   addArtist(artistId, artistName) {
     // Add an artist to the library's artist index and return it (not added if already present)
     const currArtist = this.artists[artistId];
-    if (currArtist) { return currArtist; }
+    if (currArtist) {
+      return currArtist;
+    }
     const newArtist = {
       artist_name: artistName,
-      albums: { }
+      albums: {}
     };
     this.artists[artistId] = newArtist;
     return newArtist;
@@ -935,10 +1116,12 @@ class MusicLibrary {
   addAlbumToArtist(artistId, albumId, albumName) {
     // Add an album to a known artist in the library's artist index and return it (not added if already present)
     const currAlbum = this.artists[artistId]['albums'][albumId];
-    if (currAlbum) { return currAlbum; }
+    if (currAlbum) {
+      return currAlbum;
+    }
     const newAlbum = {
       album_name: albumName,
-      album_tracks: { }
+      album_tracks: {}
     };
     this.artists[artistId]['albums'][albumId] = newAlbum;
     return newAlbum;
@@ -947,7 +1130,9 @@ class MusicLibrary {
   addTrackToArtistAlbum(artistId, albumId, trackId, trackName, inPlaylist) {
     // Add a track id to the referenced ones for a know album of an artist in the library's artist index and return it (not added if already present)
     const currTrack = this.artists[artistId]['albums'][albumId]['album_tracks'][trackId];
-    if (currTrack) { return currTrack; }
+    if (currTrack) {
+      return currTrack;
+    }
     const newTrack = {
       title: trackName,
       inPlaylists: [inPlaylist]
@@ -960,13 +1145,19 @@ class MusicLibrary {
     // For an artist, get the tracks that are similar by name. Return an object indexed by canonical name with as
     // value an array of tracks matching this canonical name, thus to consider as 'similar' tracks
     const albums = this.getAlbumsFromArtist(artistId);
-    if (!albums) { return null; }
-    const similars = {};  // indexed by a canonical representation of track's name
+    if (!albums) {
+      return null;
+    }
+    const similars = {}; // indexed by a canonical representation of track's name
     Object.values(albums).map(album => {
       Object.entries(album.album_tracks).map(([trackId, track]) => {
-        var simplified = Util.simplifyString(track.title);
-        var newEntry = {track_id: trackId, title: track.title, inPlaylists: track.inPlaylists};
-        if (similars[simplified] === undefined) {
+        const simplified = Util.simplifyString(track.title);
+        const newEntry = {
+          track_id: trackId,
+          title: track.title,
+          inPlaylists: track.inPlaylists
+        };
+        if (similars[simplified] == undefined) {
           similars[simplified] = [newEntry];
         } else {
           similars[simplified].push(newEntry);
@@ -976,10 +1167,10 @@ class MusicLibrary {
     return Object.fromEntries(Object.entries(similars).filter(([_, arrSimTracks]) => arrSimTracks.length > 1));
   }
 
-  getSimilarTracksGroupedByArtist(artistIds=[]) {
+  getSimilarTracksGroupedByArtist(artistIds = []) {
     // For some artist ids or all, build an object indexed by artist id that contains arrays of tracks similar by
     // title (similar tracks are grouped together in arrays) : aId -> [[simA1, simA2], [simB1, simB2, simB3], ...]
-    var artistIds = artistIds.length ? artistIds : this.getArtistIds();
+    artistIds = artistIds.length ? artistIds : this.getArtistIds();
     const simTracksByArtist = {};
     artistIds.map(artistId => {
       const simTracks = this.getSimilarTracksFromArtist(artistId);
@@ -990,63 +1181,80 @@ class MusicLibrary {
     return simTracksByArtist;
   }
 
-  getPlaylistsMatchingTrackFromArtist(artistId, trackTitle, albumId=null, albumName=null, onlySimilarTracks=false) {
+  getPlaylistsMatchingTrackFromArtist(artistId, trackTitle, albumId = null, albumName = null, onlySimilarTracks = false) {
     // Sometimes we don't have the track id itself (only title), so we use known artist/album stuff to determine if
     // the track is present in the library. Tries to perform the best, sometimes the album id doesn't exist anymore but actually
     // the album name matches (likely Deezer API returns obsolete info). Returns an array of playlist names the track is in.
     const inPlaylists = [];
     if (albumId) {
-      var albumTracks = this.getAlbumTracksFromArtist(artistId, albumId, albumName);
-      if (typeof albumTracks === "string") {
+      let albumTracks = this.getAlbumTracksFromArtist(artistId, albumId, albumName);
+      if (typeof albumTracks == "string") {
         // the album id we had in artist library was likely obsolete, but got another album id by matching album name
         const matchingAlbumId = albumTracks;
         albumTracks = this.getAlbumTracksFromArtist(artistId, matchingAlbumId);
         console.log("Was unable to get album", albumId, albumName, "but found a match by name", matchingAlbumId, "where track", trackTitle, "is part of", albumTracks);
-      } else if (albumTracks === null) {
+      } else if (albumTracks == null) {
         //console.error("While looking for track matching", trackTitle, ", didn't find any tracks in album", albumId, "of artist", artistId, this.getArtist(artistId));
         albumTracks = {};
       }
       Object.entries(albumTracks).map(([id, albumTrack]) => {
         if (onlySimilarTracks) {
           if (Util.stringsSimilar(trackTitle, albumTrack.title)) {
-            inPlaylists.push(Object.assign(albumTrack, { id: id }));
+            inPlaylists.push(Object.assign(albumTrack, {
+              id: id
+            }));
           }
-        } else if (albumTrack.title === trackTitle) {
-          inPlaylists.push(... albumTrack.inPlaylists);
+        } else if (albumTrack.title == trackTitle) {
+          inPlaylists.push(...albumTrack.inPlaylists);
         }
       });
-      return [... new Set(inPlaylists)];
-    } else {  // will walk through all known albums of the given artist
+      return [...new Set(inPlaylists)];
+    } else { // will walk through all known albums of the given artist
+      console.log(artistId);
+      console.log(trackTitle);
+      console.log(albumId);
+      console.log(onlySimilarTracks);
       Object.keys(this.getAlbumsFromArtist(artistId)).forEach(albumId => {
-        inPlaylists.push(... this.getPlaylistsMatchingTrackFromArtist(artistId, trackTitle, albumId, null, onlySimilarTracks));
+        inPlaylists.push(...this.getPlaylistsMatchingTrackFromArtist(artistId, trackTitle, albumId, null, onlySimilarTracks));
       });
     }
     return inPlaylists;
   }
 
-  getAllTracksByArtist(artistIds=[]) {
-    var artistIds = artistIds.length ? artistIds : this.getArtistIds();
-    const tracks = { };
+  getAllTracksByArtist(artistIds = []) {
+    artistIds = artistIds.length ? artistIds : this.getArtistIds();
+    const tracks = {};
     artistIds.map(aId => {
       const albumContent = this.getAllAlbumsContentFromArtist(aId);
       tracks[aId] = {
         trackIds: Object.keys(albumContent),
-        inPlaylists: [... new Set(Object.values(albumContent).map(track => track.inPlaylists).flat())]
+        inPlaylists: [...new Set(Object.values(albumContent).map(track => track.inPlaylists).flat())]
       };
     });
     return tracks;
   }
 
-  getStatisticsTopArtists(artistIds=[]) {
+  getStatisticsTopArtists(artistIds = []) {
     const topToOrder = Object.entries(this.getAllTracksByArtist(artistIds)).map(([aId, tracks]) => {
-      return { artist_id: aId, nbr_tracks: tracks.trackIds.length, inPlaylists: tracks.inPlaylists }
+      return {
+        artist_id: aId,
+        nbr_tracks: tracks.trackIds.length,
+        inPlaylists: tracks.inPlaylists
+      };
     });
     topToOrder.sort((a, b) => {
-      if (a.nbr_tracks < b.nbr_tracks) { return 1; }
-      if (a.nbr_tracks > b.nbr_tracks) { return -1; }
-      if (a.inPlaylists.length < b.inPlaylists.length) { return 1; }
-      else { return -1; }
-    })
+      if (a.nbr_tracks < b.nbr_tracks) {
+        return 1;
+      }
+      if (a.nbr_tracks > b.nbr_tracks) {
+        return -1;
+      }
+      if (a.inPlaylists.length < b.inPlaylists.length) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
     return topToOrder;
   }
 
@@ -1072,16 +1280,16 @@ class DeezierArea {
    * Central point on which runtime methods can be called using the singleton. */
 
   constructor(library) {
-    if(!DeezierArea._instance) {
+    if (!DeezierArea._instance) {
       DeezierArea._instance = this;
     }
-    this.library = library;  // the library gather all stuff related to user's playlists
-    this.domObserver = new DOM_Monitor();  // an object used to manage DOM listeners
+    this.library = library; // the library gather all stuff related to user's playlists
+    this.domObserver = new DOM_Monitor(); // an object used to manage DOM listeners
     return DeezierArea._instance;
   }
 
   static getInstance() {
-    return this._instance;  // singleton
+    return this._instance; // singleton
   }
 
   injectInPage() {
@@ -1089,7 +1297,7 @@ class DeezierArea {
     ElementFinder.getSidebar().appendChild(ElementBuilder.createDeezierPanelArea());
     this.setLibraryViewPlaylists();
     // setup observers on DOM elements
-    this.domObserver.createScrollingObserver();  // don't wait until we load a new page view to try it
+    this.domObserver.createScrollingObserver(); // don't wait until we load a new page view to try it
     this.domObserver.createPageChangeObserver();
     this.domObserver.createPlayingTrackObserver();
   }
@@ -1097,26 +1305,28 @@ class DeezierArea {
   appendInPlaylistTokens() {
     // Add a 'V' token in the frontend beside every song already present in a user's playlist
     // 1. Potential tracks in current page view (playlist, album)
-    var tracks = ElementFinder.getTracksInPage();
+    const tracks = ElementFinder.getTracksInPage();
     console.log("Found", tracks.length, "tracks on this page !", tracks);
     // TODO : not very efficient to go through the whole library for each track >:(
     for (let track of tracks) {
-      if(track && track.getAttribute('deezier-token')) { continue; } // song unavailable or already marked with a token
+      if (track && track.getAttribute('deezier-token')) {
+        continue;
+      } // song unavailable or already marked with a token
 
-      var titleElmt, inPlaylistsName = [];
-      var trackId = ElementFinder.getTrackIdFromElement(track);
+      let titleElmt, inPlaylistsName = [];
+      const trackId = ElementFinder.getTrackIdFromElement(track);
 
       if (trackId) {
         titleElmt = track.querySelector(".cell-title");
         inPlaylistsName = this.library.getPlaylistsContainingTrack(trackId);
-      } else {  // likely we are in the case classnames are obfuscated
-        const trackInfos = ElementFinder.getTrackInfosFromElement(track);  // cannot get directly track id, but we have artist/album id + name of the track
+      } else { // likely we are in the case classnames are obfuscated
+        let trackInfos = ElementFinder.getTrackInfosFromElement(track); // cannot get directly track id, but we have artist/album id + name of the track
         titleElmt = trackInfos.title_elmt;
-        var inPlaylistsId = this.library.getPlaylistsMatchingTrackFromArtist(trackInfos.artist_id, trackInfos.title, trackInfos.album_id, trackInfos.album_name);
+        const inPlaylistsId = this.library.getPlaylistsMatchingTrackFromArtist(trackInfos.artist_id, trackInfos.title, trackInfos.album_id, trackInfos.album_name);
         inPlaylistsName = this.library.getPlaylistsNameFromId(inPlaylistsId);
       }
 
-      if (inPlaylistsName.length) {  // track is in at least one playlist
+      if (inPlaylistsName.length) { // track is in at least one playlist
         titleElmt.parentElement.insertBefore(ElementBuilder.createInPlaylistToken(inPlaylistsName), titleElmt);
         track.setAttribute('deezier-token', 1);
       }
@@ -1127,14 +1337,14 @@ class DeezierArea {
       console.error("Unable to retrieve track currently playing");
       return null;
     }
-    var titleElmt = currTrackInfo.track;
+    const titleElmt = currTrackInfo.track;
 
     if (titleElmt.getAttribute('deezier-token')) {
       titleElmt.removeAttribute('deezier-token');
       titleElmt.parentNode.getElementsByClassName('deezier-token')[0].remove();
     }
-    var inPlaylistsId = this.library.getPlaylistsMatchingTrackFromArtist(currTrackInfo.artist_id, currTrackInfo.title, currTrackInfo.album_id);
-    var inPlaylistsName = this.library.getPlaylistsNameFromId(inPlaylistsId);
+    const inPlaylistsId = this.library.getPlaylistsMatchingTrackFromArtist(currTrackInfo.artist_id, currTrackInfo.title, currTrackInfo.album_id);
+    const inPlaylistsName = this.library.getPlaylistsNameFromId(inPlaylistsId);
     if (inPlaylistsName.length) {
       titleElmt.parentElement.insertBefore(ElementBuilder.createInPlaylistToken(inPlaylistsName), titleElmt);
       titleElmt.setAttribute('deezier-token', 1);
@@ -1144,7 +1354,7 @@ class DeezierArea {
   toggleDeezierPopup() {
     // (De)spawn the deezier popup, where we have more space to display library & other Deezier stuff
     const popupElmt = ElementFinder.getDeezierPopup();
-    if(popupElmt === null) {
+    if (popupElmt == null) {
       ElementFinder.getDeezerApp().appendChild(ElementBuilder.createPopupPanel());
     } else {
       popupElmt.remove();
@@ -1170,21 +1380,25 @@ class DeezierArea {
     return this.library.searchMathingTracks(tomatch);
   }
 
-  searchSimilarTracks(artistIds=[]) {
+  searchSimilarTracks(artistIds = []) {
     return this.library.getSimilarTracksGroupedByArtist(artistIds);
   }
 
-  getArtistsTop(artistIds=[]) {
+  getArtistsTop() {
     return this.library.getStatisticsTopArtists();
   }
 
   cleanLibraryViews() {
     // Remove the content of the library view from its container
     const libraryElmt = ElementFinder.getLibrary();
-    while (libraryElmt.firstChild) { libraryElmt.firstChild.remove(); }
+    while (libraryElmt.firstChild) {
+      libraryElmt.firstChild.remove();
+    }
     const libraryPopupElmt = ElementFinder.getPopupLibrary();
-    if (libraryPopupElmt) {  // Additionaly if the popup has been spawned ...
-      while (libraryPopupElmt.firstChild) { libraryPopupElmt.firstChild.remove(); }
+    if (libraryPopupElmt) { // Additionaly if the popup has been spawned ...
+      while (libraryPopupElmt.firstChild) {
+        libraryPopupElmt.firstChild.remove();
+      }
     }
     return [libraryElmt, libraryPopupElmt];
   }
@@ -1194,7 +1408,9 @@ class DeezierArea {
     const [libraryElmt, libraryPopupElmt] = this.cleanLibraryViews();
     ElementBuilder.createLibraryListElmts().map(p => {
       libraryElmt.appendChild(p);
-      if (libraryPopupElmt) { libraryPopupElmt.appendChild(p.cloneNode(true)); }
+      if (libraryPopupElmt) {
+        libraryPopupElmt.appendChild(p.cloneNode(true));
+      }
     });
   }
 
@@ -1203,7 +1419,9 @@ class DeezierArea {
     const [libraryElmt, libraryPopupElmt] = this.cleanLibraryViews();
     ElementBuilder.createLibrarySearchResultsElmts(searchResults).map(p => {
       libraryElmt.appendChild(p);
-      if (libraryPopupElmt) { libraryPopupElmt.appendChild(p.cloneNode(true)); }
+      if (libraryPopupElmt) {
+        libraryPopupElmt.appendChild(p.cloneNode(true));
+      }
     });
   }
 
@@ -1211,7 +1429,9 @@ class DeezierArea {
     const [libraryElmt, libraryPopupElmt] = this.cleanLibraryViews();
     ElementBuilder.createSimilarTracksElmts(similarTracks).map(elmt => {
       libraryElmt.appendChild(elmt);
-      if (libraryPopupElmt) { libraryPopupElmt.appendChild(elmt.cloneNode(true)); }
+      if (libraryPopupElmt) {
+        libraryPopupElmt.appendChild(elmt.cloneNode(true));
+      }
     });
   }
 
@@ -1219,7 +1439,9 @@ class DeezierArea {
     const [libraryElmt, libraryPopupElmt] = this.cleanLibraryViews();
     ElementBuilder.createTopArtistElmts(topArtists).map(elmt => {
       libraryElmt.appendChild(elmt);
-      if (libraryPopupElmt) { libraryPopupElmt.appendChild(elmt.cloneNode(true)); }
+      if (libraryPopupElmt) {
+        libraryPopupElmt.appendChild(elmt.cloneNode(true));
+      }
     });
   }
 
@@ -1239,8 +1461,8 @@ async function process() {
     delayStart(1000);
     return;
   }
-  var lib = new MusicLibrary(userId);
-  var area = new DeezierArea(lib);
+  const lib = new MusicLibrary(userId);
+  const area = new DeezierArea(lib);
 
   area.refreshLibraryContent();
   // Inject Deezier panel with a little delay to be sure to have list of playlists already pulled
@@ -1248,11 +1470,9 @@ async function process() {
   setTimeout(() => area.injectInPage(), 1000);
 }
 
-function delayStart(delay=4000) {
+function delayStart(delay = 10000) {
   setTimeout(process, delay);
 }
 
-console.log("===== DEEZIER =====");
+console.log("==== DEEZIER ====");
 delayStart();
-
-
